@@ -1,7 +1,7 @@
 steps:
 # Build the valhalla container image
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:$SHORT_SHA', '-t', 'europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:latest', '.']
+  args: ['build', '--build-arg', 'VALHALLA_BUILDER_IMAGE=europe-docker.pkg.dev/firerisk-app/ghcr/valhalla/valhalla:latest', '--build-arg', 'VALHALLA_UID=59998', '--build-arg', 'VALHALLA_GID=59998', '-t', 'europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:$SHORT_SHA', '-t', 'europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:latest', '.']
 # Push the container image to artifact Registry
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:$SHORT_SHA']
