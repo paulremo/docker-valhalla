@@ -1,0 +1,29 @@
+steps:
+
+# Build the valhalla container image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:$SHORT_SHA', '-t', 'europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:latest', '.']
+# Push the container image to artifact Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:$SHORT_SHA']
+# Deploy container image to Cloud Run Job for valhalla data preparation
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: ['run', 'jobs', 'deploy', 'valhalla-prep', '--image=europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:$SHORT_SHA', '--region=europe-west6', '--add-volume=name=custom_files,type=cloud-storage,bucket=firerisk-valhalla', '--add-volume-mount=volume=custom_files,mount-path=/custom_files', '--args=-e tile_urls=https://download.geofabrik.de/europe/switzerland-latest.osm.pbf', '--execute-now', '--wait']
+# Overwrite valhalla configurations (there is currently no way to pass these options to the container directly)
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      gsutil cp gs://firerisk-valhalla/valhalla.json config.json
+      jq '.service_limits.isochrone.max_distance = "100000.0" | .service_limits.isochrone.max_contours = "20"' config.json > tmp.json
+      gsutil cp tmp.json gs://firerisk-valhalla/valhalla.json
+# Deploy container image to Cloud Run for valhalla service
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: ['run', 'deploy', 'valhalla-route', '--image=europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:$SHORT_SHA', '--region=europe-west6', '--add-volume=name=custom_files,type=cloud-storage,bucket=firerisk-valhalla', '--add-volume-mount=volume=custom_files,mount-path=/custom_files', '--args=-p 8002:8002']
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+images: ['europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:$SHORT_SHA', 'europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:latest']
