@@ -8,7 +8,7 @@ steps:
 # Deploy container image to Cloud Run Job for valhalla data preparation
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: gcloud
-  args: ['run', 'jobs', 'deploy', 'valhalla-prep', '--image=europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:$SHORT_SHA', '--region=europe-west6', '--add-volume=name=custom_files,type=cloud-storage,bucket=firerisk-valhalla', '--add-volume-mount=volume=custom_files,mount-path=/custom_files', '--args=-e tile_urls=https://download.geofabrik.de/europe/switzerland-latest.osm.pbf', '--execute-now', '--wait']
+  args: ['run', 'jobs', 'deploy', 'valhalla-prep', '--image=europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:$SHORT_SHA', '--region=europe-west6', '--add-volume=name=custom_files,type=cloud-storage,bucket=firerisk-valhalla,mount-options=uid=59998;gid=59998', '--add-volume-mount=volume=custom_files,mount-path=/custom_files', '--args=-e tile_urls=https://download.geofabrik.de/europe/switzerland-latest.osm.pbf', '--execute-now', '--wait']
 # Overwrite valhalla configurations with local valhalla.config (there is currently no way to pass these options to the container directly)
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: 'bash'
