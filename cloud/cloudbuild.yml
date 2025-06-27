@@ -5,7 +5,15 @@ steps:
 # Push the container image to artifact Registry
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:$SHORT_SHA']
-# Deploy container image to Cloud Run Job for valhalla data preparation
+# empty bucket
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      echo "Deleting all files from gs://firerisk-valhalla/"
+      gsutil -m rm -r gs://firerisk-valhalla/**
+# Deploy container image to Cloud Run Job for valhalla data preparation and execute
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: gcloud
   args: ['beta', 'run', 'jobs', 'deploy', 'valhalla-prep', '--image=europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:$SHORT_SHA', '--region=europe-west6', '--add-volume=name=custom_files,type=cloud-storage,bucket=firerisk-valhalla,mount-options=uid=59998;gid=59998', '--add-volume-mount=volume=custom_files,mount-path=/custom_files', '--set-env-vars=tile_urls=https://download.geofabrik.de/europe/switzerland-latest.osm.pbf,force_rebuild=True,serve_tiles=False', '--task-timeout=12h', '--execute-now', '--wait']
