@@ -1,35 +1,46 @@
 steps:
-# Build the valhalla container image
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '--build-arg', 'VALHALLA_BUILDER_IMAGE=europe-docker.pkg.dev/firerisk-app/ghcr/valhalla/valhalla:latest', '--build-arg', 'VALHALLA_UID=59998', '--build-arg', 'VALHALLA_GID=59998', '-t', 'europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:$SHORT_SHA', '-t', 'europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:latest', '.']
-# Push the container image to artifact Registry
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:$SHORT_SHA']
-# empty bucket
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  entrypoint: 'bash'
-  args:
-    - '-c'
+# Check passed TAG_NAME for uniqueness
+- id: check-tag
+  name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: bash
+  args: 
+    - -c
     - |
-      echo "Deleting all files from gs://firerisk-valhalla/"
-      gsutil -m rm -r gs://firerisk-valhalla/**
-# Deploy container image to Cloud Run Job for valhalla data preparation and execute
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  entrypoint: gcloud
-  args: ['beta', 'run', 'jobs', 'deploy', 'valhalla-prep', '--image=europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:$SHORT_SHA', '--region=europe-west6', '--add-volume=name=custom_files,type=cloud-storage,bucket=firerisk-valhalla,mount-options=uid=59998;gid=59998', '--add-volume-mount=volume=custom_files,mount-path=/custom_files', '--set-env-vars=tile_urls=https://download.geofabrik.de/europe/switzerland-latest.osm.pbf,force_rebuild=True,serve_tiles=False', '--task-timeout=12h', '--execute-now', '--wait']
-# Overwrite valhalla configurations with local valhalla.config (there is currently no way to pass these options to the container directly)
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  entrypoint: 'bash'
-  args:
-    - '-c'
-    - |
-      echo "Copying valhalla.json to GCS bucket..."
-      gsutil cp cloud/valhalla.json gs://firerisk-valhalla/
-# Deploy container image to Cloud Run for valhalla service
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  entrypoint: gcloud
-  args: ['beta', 'run', 'deploy', 'valhalla-route', '--image=europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:$SHORT_SHA', '--region=europe-west6', '--add-volume=name=custom_files,type=cloud-storage,bucket=firerisk-valhalla,mount-options=uid=59998;gid=59998', '--add-volume-mount=volume=custom_files,mount-path=/custom_files', '--port=8002']
+      set -e
 
+      echo "Checking if tag exists: ${_IMAGE}:${TAG_NAME}"
+      if gcloud artifacts docker tags list "${_IMAGE}" --format='get(TAG)' | grep -qx "${TAG_NAME}"; then
+        echo "Tag ${TAG_NAME} already exists. Aborting build."
+        exit 1
+      else
+        echo "Tag does not exist. Continuing."
+      fi
+# Build the valhalla container image
+- id: build-image
+  name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'build'
+    - '--build-arg'
+    - 'VALHALLA_BUILDER_IMAGE={_BUILDER_IMAGE}:latest'
+    - '--build-arg'
+    - 'VALHALLA_UID=59998'
+    - '--build-arg'
+    - 'VALHALLA_GID=59998'
+    - '-t'
+    - '${_IMAGE}:${TAG_NAME}'
+    - '-t'
+    - '${_IMAGE}:latest'
+    - '.'
+# Push the container image to artifact Registry
+- id: push-tag
+  name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'push'
+    - '--all-tags'
+    - '${_IMAGE}'
+
+substitutions:
+    _IMAGE: europe-docker.pkg.dev/${PROJECT_ID}/images/valhalla
+    _BUILDER_IMAGE: europe-docker.pkg.dev/${PROJECT_ID}/ghcr/valhalla/valhalla
 options:
   logging: CLOUD_LOGGING_ONLY
-images: ['europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:$SHORT_SHA', 'europe-docker.pkg.dev/$PROJECT_ID/images/valhalla:latest']

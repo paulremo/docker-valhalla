@@ -4,3 +4,4 @@ custom_files/
 !tests/*.pbf
 *.tar
 *.sqlite
+*.bak
