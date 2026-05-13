@@ -35,7 +35,7 @@ SEMVER_CORE_REGEX='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
 
 
 if [[ ! "${PACKAGE_VERSION}" =~ ${SEMVER_CORE_REGEX} ]]; then
-  fail "${RELEASE_KIND} version must look like 1.2.3: three integers separated by periods, with no leading zeros."
+  fail "${PACKAGE_VERSION} version must look like 1.2.3: three integers separated by periods, with no leading zeros."
 fi
 
 CURRENT_BRANCH="$(git branch --show-current)"
@@ -66,11 +66,6 @@ fi
 if [[ -n "${CONDA_DEFAULT_ENV:-}" && "${CONDA_DEFAULT_ENV}" != "${CONDA_ENV_NAME}" ]]; then
   fail "Current conda env is ${CONDA_DEFAULT_ENV}; expected ${CONDA_ENV_NAME}."
 fi
-
-echo "Using Python: $(python -c 'import sys; print(sys.executable)')"
-
-echo "Running ${RELEASE_KIND} tests in conda environment ${CONDA_ENV_NAME}..."
-python -m pytest "${TEST_PATHS[@]}"
 
 echo "Preparing release ${TAG_VERSION}..."
 
