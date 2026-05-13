@@ -39,8 +39,8 @@ if [[ ! "${PACKAGE_VERSION}" =~ ${SEMVER_CORE_REGEX} ]]; then
 fi
 
 CURRENT_BRANCH="$(git branch --show-current)"
-if [[ "${CURRENT_BRANCH}" != "main" ]]; then
-  fail "Releases must be created from the main branch. Current branch: ${CURRENT_BRANCH}"
+if [[ "${CURRENT_BRANCH}" != "master" ]]; then
+  fail "Releases must be created from the master branch. Current branch: ${CURRENT_BRANCH}"
 fi
 
 if ! git diff --quiet || ! git diff --cached --quiet; then
