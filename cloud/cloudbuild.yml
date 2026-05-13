@@ -21,7 +21,7 @@ steps:
   args:
     - 'build'
     - '--build-arg'
-    - 'VALHALLA_BUILDER_IMAGE={_BUILDER_IMAGE}:latest'
+    - 'VALHALLA_BUILDER_IMAGE=${_BUILDER_IMAGE}:latest'
     - '--build-arg'
     - 'VALHALLA_UID=59998'
     - '--build-arg'
