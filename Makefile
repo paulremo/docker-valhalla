@@ -11,7 +11,7 @@ BASH ?= bash
 
 ## Release a new version
 .PHONY: release
-release-app:
+release:
 	@if [ -z "$(VERSION)" ]; then \
 		echo "Error: VERSION argument required."; \
 		echo "Usage: make release VERSION=<version>"; \
