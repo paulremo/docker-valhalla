@@ -48,7 +48,7 @@ If you want to build the image yourself, be aware that you might need to adapt t
 Then it's a simple
 
 ```shell script
-docker build -t ghcr.io/nilsnolde/docker-valhalla/valhalla:latest .
+docker build --pull --no-cache -t ghcr.io/nilsnolde/docker-valhalla/valhalla:latest .
 ```
 
 ## Environment variables

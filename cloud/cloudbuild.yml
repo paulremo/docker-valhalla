@@ -20,6 +20,8 @@ steps:
   name: 'gcr.io/cloud-builders/docker'
   args:
     - 'build'
+    - '--pull'
+    - '--no-cache'
     - '--build-arg'
     - 'VALHALLA_BUILDER_IMAGE=${_BUILDER_IMAGE}:latest'
     - '--build-arg'

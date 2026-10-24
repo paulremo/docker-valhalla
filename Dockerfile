@@ -18,7 +18,8 @@ LABEL org.opencontainers.image.authors="nilsnolde+github@proton.me"
 
 RUN apt-get update > /dev/null && \
   export DEBIAN_FRONTEND=noninteractive && \
-  apt-get install -y libluajit-5.1-2 libgdal34 \
+  apt-get upgrade -y > /dev/null && \
+  apt-get install -y --no-install-recommends ca-certificates libluajit-5.1-2 libgeotiff5 \
   libzmq5 libczmq4 spatialite-bin libprotobuf-lite32 sudo locales \
   libsqlite3-0 libsqlite3-mod-spatialite libcurl4 \
   python3.12-minimal python3-requests python3-shapely python-is-python3 \
